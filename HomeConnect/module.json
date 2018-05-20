@@ -1,0 +1,18 @@
+{
+  "id": "{77233993-AFED-4C97-AB25-8E3EAEDC0BF7}",
+  "name": "HomeConnect",
+  "type": 1,
+  "vendor": "HomeConnect GmbH",
+  "aliases": [
+    "HomeConnect"
+  ],
+  "parentRequirements": [
+    "{79827379-F36E-4ADA-8A95-5F8D1DC92FA9}"
+  ],
+  "childRequirements": [
+  ],
+  "implemented": [
+    "{6545BC63-8B84-4858-8812-BF359D1E5E66}"
+  ],
+  "prefix": "HomeConnect"
+}
