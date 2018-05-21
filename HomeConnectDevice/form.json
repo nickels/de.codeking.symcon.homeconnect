@@ -22,7 +22,7 @@
     {
       "type": "Button",
       "label": "Connect Event",
-      "onClick": "HC_ConnectEvent($id, true);"
+      "onClick": "HomeConnectDevice_ConnectEvent($id, true);"
     }
   ]
 }

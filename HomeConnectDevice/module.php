@@ -21,7 +21,6 @@ use PTLS\Exceptions\TLSAlertException;
  * @property TLSState $State
  * @property string $Handshake
  * @property object $Multi_TLS
- * @property int $ParentID
  * @property bool $reauth
  *
  */
@@ -202,7 +201,7 @@ class HomeConnectDevice extends Module
      */
     public function ReconnectParentSocket($force = false)
     {
-        $ParentID = $this->ParentID;
+        $ParentID = $this->GetParentId();
         if (($this->HasActiveParent() || $force) && $ParentID > 0) {
             IPS_SetProperty($ParentID, 'Open', true);
             @IPS_ApplyChanges($ParentID);
