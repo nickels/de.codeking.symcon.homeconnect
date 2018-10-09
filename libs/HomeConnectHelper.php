@@ -112,7 +112,7 @@ trait HomeConnectHelper
                 } else {
                     $params = [
                         'client_id' => $this->client_id,
-                        'redirect_uri' => $this->simulator ? 'http://localhost' : 'https://codeking.de/homeconnect/?ip=' . $this->ip,
+                        'redirect_uri' => $this->simulator ? 'http://localhost' : 'https://herrmann.to/homeconnect/?ip=' . $this->ip,
                         'grant_type' => 'authorization_code',
                         'code' => $this->oauth_code,
                         'state' => $this->InstanceID
