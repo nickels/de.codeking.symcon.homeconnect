@@ -161,11 +161,6 @@ class HomeConnectDevice extends Module
             $simulator = IPS_GetProperty($this->io, 'simulator_enabled');
             $this->initHomeConnect($simulator);
 
-            // replace client id, when enabled
-            if (IPS_GetProperty($this->io, 'replace_client_id')) {
-                $this->client_id = IPS_GetProperty($this->io, 'my_client_id');
-            }
-
             // set tokens
             $this->access_token = IPS_GetProperty($this->io, 'access_token');
             $this->refresh_token = IPS_GetProperty($this->io, 'refresh_token');

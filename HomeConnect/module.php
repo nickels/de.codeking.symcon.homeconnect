@@ -7,10 +7,10 @@ require_once(__ROOT__ . '/libs/helpers/autoload.php');
  * Class HomeConnect
  * IP-Symcon HomeConnect module
  *
- * @version     1.1
+ * @version     1.2
  * @category    Symcon
  * @package     de.codeking.symcon.homeconnect
- * @author      Frank Herrmann <frank@codeking.de>
+ * @author      Frank Herrmann <frank@herrmann.to>
  * @link        https://codeking.de
  * @link        https://github.com/CodeKing/de.codeking.symcon.homeconnect
  *
@@ -22,13 +22,13 @@ class HomeConnect extends Module
         HomeConnectHelper;
 
     const guid_device = '{6545BC63-8B84-4858-8812-BF359D1E5E66}';
+    const debug_kernel = '410156ed1716ec36e4d17fd488122604ccd9f2e8';
 
     private $ip;
     private $category_id;
     private $simulator = false;
     private $simulator_devices;
     private $redirect;
-    private $replace_client_id;
 
     private $devices = [];
     private $device_settings = [];
@@ -80,14 +80,16 @@ class HomeConnect extends Module
         $this->RegisterPropertyString('refresh_token', '');
 
         $this->RegisterPropertyInteger('category_id', 0);
+        $this->RegisterPropertyString('language', 'de-DE');
         $this->RegisterPropertyBoolean('simulator_enabled', false);
         $this->RegisterPropertyString('simulator_devices', '');
         $this->RegisterPropertyString('redirect', 'http://localhost');
-        $this->RegisterPropertyBoolean('replace_client_id', false);
-        $this->RegisterPropertyString('my_client_id', '');
 
         // register update timer
         $this->RegisterTimer('UpdateAccessToken', 0, $this->_getPrefix() . '_UpdateAccessToken($_IPS[\'TARGET\']);');
+
+        // log kernel revision
+        $this->_log('Kernel Revision', IPS_GetKernelRevision());
     }
 
     /**
@@ -117,7 +119,6 @@ class HomeConnect extends Module
         $this->access_token = $this->ReadPropertyString('access_token');
         $this->refresh_token = $this->ReadPropertyString('refresh_token');
         $this->redirect = $this->ReadPropertyString('redirect');
-        $this->replace_client_id = $this->ReadPropertyBoolean('replace_client_id');
 
         $this->category_id = $this->ReadPropertyInteger('category_id');
 
@@ -125,11 +126,6 @@ class HomeConnect extends Module
         $this->simulator = $this->ReadPropertyBoolean('simulator_enabled');
         $this->simulator_devices = $this->ReadPropertyString('simulator_devices');
         $this->initHomeConnect($this->simulator);
-
-        // replace client id, when enabled
-        if ($this->replace_client_id) {
-            $this->client_id = $this->ReadPropertyString('my_client_id');
-        }
     }
 
     /**
@@ -143,6 +139,9 @@ class HomeConnect extends Module
 
         // dump devices, if requested
         if ($dump_devices) {
+            foreach ($this->devices AS $key => $device) {
+                unset($this->devices[$key]['Settings']);
+            }
             var_dump($this->devices);
             exit;
         }
@@ -333,11 +332,7 @@ class HomeConnect extends Module
         $this->ReadConfig();
 
         // detect redirect
-        if ($this->simulator) {
-            $redirect = 'http://localhost';
-        } else {
-            $redirect = $this->replace_client_id ? $this->redirect : 'https://codeking.de/homeconnect/?ip=' . $this->ip;
-        }
+        $redirect = 'https://herrmann.to/homeconnect/?ip=' . $this->ip;
 
         // build params
         $params = [
@@ -351,6 +346,7 @@ class HomeConnect extends Module
                 'Dishwasher-Control',
                 'Washer-Control',
                 'Dryer-Control',
+                'WasherDryer-Control',
                 'CoffeeMaker-Control'
             ]),
             'state' => $this->InstanceID
@@ -359,31 +355,8 @@ class HomeConnect extends Module
         // build oauth uri
         $oauth_uri = $this->endpoint . 'security/oauth/authorize?' . http_build_query($params);
 
-        // save tokens directly on simulator
-        if ($this->simulator) {
-            $ch = curl_init($oauth_uri);
-            curl_exec($ch);
-            $redirect_url = curl_getinfo($ch, CURLINFO_REDIRECT_URL);
-            curl_close($ch);
-
-            // get query params
-            $redirect_url = explode('?', $redirect_url, 2)[1];
-            parse_str($redirect_url, $query);
-
-            // login
-            $this->oauth_code = isset($query['code']) ? $query['code'] : false;
-
-            if ($this->Login()) {
-                echo $this->Translate('Please re-open instance configuration to proceed.');
-            } else {
-                echo $this->Translate('Error! Please check logs for details.');
-            }
-            exit;
-
-        } // open oauth uri in browser
-        else {
-            echo $oauth_uri;
-        }
+        // open oauth uri in browser
+        echo $oauth_uri;
     }
 
     /**
@@ -558,6 +531,10 @@ class HomeConnect extends Module
             [
                 'type' => 'Label',
                 'label' => 'If you like this module and want to support further development of my symcon modules, feel free to donate at www.paypal.me/codeking'
+            ],
+            [
+                'type' => 'Label',
+                'label' => 'www.paypal.me/codeking'
             ]
         ];
 
@@ -630,52 +607,29 @@ class HomeConnect extends Module
                     [
                         'type' => 'Label',
                         'label' => '___ [ Settings ] _______________________________________________________________________________________'
+                    ],
+                    [
+                        'name' => 'ip',
+                        'type' => 'ValidationTextBox',
+                        'caption' => 'Symcon IP'
                     ]
                 ]
             );
 
-            if (!$this->simulator && !$this->replace_client_id) {
-                $formHead[] = [
-                    'name' => 'ip',
-                    'type' => 'ValidationTextBox',
-                    'caption' => 'Symcon IP'
-                ];
-            }
-
-            $formHead[] = [
-                'name' => 'simulator_enabled',
-                'type' => 'CheckBox',
-                'caption' => 'enable simulator'
-            ];
-
-            $formHead[] = [
-                'name' => 'replace_client_id',
-                'type' => 'CheckBox',
-                'caption' => 'Use own api key'
-            ];
-
-            if ($this->replace_client_id) {
-                $formHead[] = [
-                    'name' => 'my_client_id',
-                    'type' => 'ValidationTextBox',
-                    'caption' => 'API Key'
-                ];
-
-                if ($this->simulator) {
-                    $formHead[] = [
-                        'type' => 'Label',
-                        'label' => 'For using the simulator with your own api key, you have to add "http://localhost" to your HomeConnect application\'s redirect url.'
-                    ];
-                } else {
-                    $formHead[] = [
-                        'name' => 'redirect',
-                        'type' => 'ValidationTextBox',
-                        'caption' => 'Redirect URL'
-                    ];
-                }
+            // enable debug kernel
+            if (self::debug_kernel) {
+                $formHead = array_merge(
+                    $formHead,
+                    [
+                        [
+                            'name' => 'simulator_enabled',
+                            'type' => 'CheckBox',
+                            'caption' => 'enable simulator'
+                        ]
+                    ]
+                );
             }
         }
-
 
         $formHead = array_merge(
             $formHead,

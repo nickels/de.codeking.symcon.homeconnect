@@ -20,6 +20,7 @@ trait HomeConnectHelper
     private $access_token;
     private $oauth_code;
     private $refresh_token;
+    private $language;
 
     private $error;
 
@@ -112,7 +113,7 @@ trait HomeConnectHelper
                 } else {
                     $params = [
                         'client_id' => $this->client_id,
-                        'redirect_uri' => $this->simulator ? 'http://localhost' : 'https://herrmann.to/homeconnect/?ip=' . $this->ip,
+                        'redirect_uri' => $this->simulator ? 'http://127.0.0.1' : 'https://herrmann.to/homeconnect/?ip=' . $this->ip,
                         'grant_type' => 'authorization_code',
                         'code' => $this->oauth_code,
                         'state' => $this->InstanceID
@@ -145,7 +146,7 @@ trait HomeConnectHelper
                 $curlOptions[CURLOPT_HTTPHEADER] = [
                     'Content-Type: application/vnd.bsh.sdk.v1+json',
                     'Accept: application/vnd.bsh.sdk.v1+json',
-                    'Accept-Language: de-DE',
+                    'Accept-Language: ' . $this->language,
                     'Authorization: Bearer ' . $this->access_token
                 ];
                 break;
@@ -225,7 +226,6 @@ trait HomeConnectHelper
         if (!$this->oauth_code && !$this->refresh_token) {
             return false;
         }
-
 
         // get request token
         $endpoint = 'security/oauth/token';
