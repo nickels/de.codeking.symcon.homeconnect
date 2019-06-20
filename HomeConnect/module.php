@@ -616,6 +616,92 @@ class HomeConnect extends Module
                 ]
             );
 
+            /*
+{
+      "type": "Select",
+      "name": "language",
+      "caption": "Language",
+      "options": [
+        {
+          "caption": "Chinese",
+          "value": "zh-CN"
+        },
+        {
+          "caption": "Czech",
+          "value": "cs-CZ"
+        },
+        {
+          "caption": "Danish",
+          "value": "da-DK"
+        },
+        {
+          "caption": "Dutch",
+          "value": "nl-NL"
+        },
+        {
+          "caption": "English",
+          "value": "en-GB"
+        },
+        {
+          "caption": "Finnish",
+          "value": "fi-FI"
+        },
+        {
+          "caption": "French",
+          "value": "cr-FR"
+        },
+        {
+          "caption": "German",
+          "value": "de-DE"
+        },
+        {
+          "caption": "Greek",
+          "value": "el-GR"
+        },
+        {
+          "caption": "Hungarian",
+          "value": "hu-HU"
+        },
+        {
+          "caption": "Italian",
+          "value": "it-ID"
+        },
+        {
+          "caption": "Norwegian",
+          "value": "no-NO"
+        },
+        {
+          "caption": "Polish",
+          "value": "pl-PL"
+        },
+        {
+          "caption": "Portuguese",
+          "value": "pt-PT"
+        },
+        {
+          "caption": "Russian",
+          "value": "ru-RU"
+        },
+        {
+          "caption": "Slovak",
+          "value": "sk-SK"
+        },
+        {
+          "caption": "Spanish",
+          "value": "es-ES"
+        },
+        {
+          "caption": "Swedish",
+          "value": "sv-SE"
+        },
+        {
+          "caption": "Turkish",
+          "value": "tr-TR"
+        }
+      ]
+    }
+            */
+
             // enable debug kernel
             if (self::debug_kernel) {
                 $formHead = array_merge(
