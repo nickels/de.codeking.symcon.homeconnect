@@ -164,6 +164,7 @@ class HomeConnectDevice extends Module
             // set tokens
             $this->access_token = IPS_GetProperty($this->io, 'access_token');
             $this->refresh_token = IPS_GetProperty($this->io, 'refresh_token');
+            $this->retry_after = IPS_GetProperty($this->io, 'retry_after');
         }
     }
 

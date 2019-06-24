@@ -78,6 +78,7 @@ class HomeConnect extends Module
         $this->RegisterPropertyString('ip', '127.0.0.1');
         $this->RegisterPropertyString('access_token', '');
         $this->RegisterPropertyString('refresh_token', '');
+        $this->RegisterPropertyInteger('retry_after', 0);
 
         $this->RegisterPropertyInteger('category_id', 0);
         $this->RegisterPropertyString('language', 'de-DE');
@@ -121,6 +122,7 @@ class HomeConnect extends Module
         $this->redirect = $this->ReadPropertyString('redirect');
 
         $this->category_id = $this->ReadPropertyInteger('category_id');
+        $this->retry_after = $this->ReadPropertyInteger('retry_after');
 
         // get api uri
         $this->simulator = $this->ReadPropertyBoolean('simulator_enabled');
@@ -150,7 +152,7 @@ class HomeConnect extends Module
         $this->SaveDevices();
 
         // output device info
-        echo sprintf($this->Translate($this->devices_found == 1 ? '%d device found!' : '%d devices found!'), $this->devices_found);
+        echo sprintf($this->Translate($this->devices_found == 1 ? '%d device found and saved!' : '%d devices found and saved!'), $this->devices_found);
     }
 
     /**
@@ -332,7 +334,7 @@ class HomeConnect extends Module
         $this->ReadConfig();
 
         // detect redirect
-        $redirect = 'https://herrmann.to/homeconnect/?ip=' . $this->ip;
+        $redirect = $this->simulator ? 'http://127.0.0.1:3777/hook/homeconnect' : 'https://herrmann.to/homeconnect/?ip=' . $this->ip;
 
         // build params
         $params = [
@@ -790,6 +792,11 @@ class HomeConnect extends Module
                 'code' => 201,
                 'icon' => 'inactive',
                 'caption' => 'Error: Could not connect to api. Please check your connection details!'
+            ],
+            [
+                'code' => 202,
+                'icon' => 'inactive',
+                'caption' => 'API is locked due to too many requests for a few minutes.'
             ]
         ];
     }

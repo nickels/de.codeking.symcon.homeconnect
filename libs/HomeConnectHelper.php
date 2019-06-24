@@ -21,6 +21,7 @@ trait HomeConnectHelper
     private $oauth_code;
     private $refresh_token;
     private $language;
+    private $retry_after = 0;
 
     private $error;
 
@@ -77,6 +78,18 @@ trait HomeConnectHelper
      */
     private function Api($endpoint = NULL, $params = [], $reauth = false)
     {
+        if ($this->retry_after) {
+            // check retry after timestamp
+            if ($this->retry_after > time()) {
+                return false;
+            }
+
+            // reset retry_after
+            $this->retry_after = 0;
+            IPS_SetProperty($this->InstanceID, 'retry_after', 0);
+            IPS_ApplyChanges($this->InstanceID);
+        }
+
         // build api url, depending on simulator enabled
         $uri = $this->endpoint;
         if (!strstr($endpoint, 'oauth')) {
@@ -93,7 +106,7 @@ trait HomeConnectHelper
 
         // set default curl options
         $curlOptions = [
-            CURLOPT_HEADER => false,
+            CURLOPT_HEADER => true,
             CURLOPT_TIMEOUT => 10,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POSTFIELDS => NULL,
@@ -159,10 +172,31 @@ trait HomeConnectHelper
         curl_setopt_array($ch, $curlOptions);
 
         // exec curl
-        $result = curl_exec($ch);
+        $response = curl_exec($ch);
         $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $redirect_url = curl_getinfo($ch, CURLINFO_REDIRECT_URL);
 
+        // extract header from result
+        $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
+        $header = substr($response, 0, $header_size);
+        $result = substr($response, $header_size);
+
+        // parse header
+        $headers = [];
+        $output = rtrim($header);
+        $data = explode("\n", $output);
+        $headers['status'] = $data[0];
+        array_shift($data);
+
+        foreach ($data as $part) {
+            $middle = explode(':', $part, 2);
+            if (!isset($middle[1])) {
+                $middle[1] = null;
+            }
+            $headers[strtolower(trim($middle[0]))] = trim($middle[1]);
+        }
+
+        $this->_log('HomeConnect headers', $headers);
         $this->_log('HomeConnect result', $result ? $result : $status_code);
 
         // try to convert json to array
@@ -196,10 +230,19 @@ trait HomeConnectHelper
             }
 
             $this->_log('HomeConnect', 'Error: ' . $this->error);
-            if (!in_array($status_code, [409, 403])) {
+
+            // too many requests, retry after...
+            if ($status_code == 429) {
+                $this->SetStatus(202);
+
+                // save retry after timestamp
+                $retry_after = time() + $headers['retry_after'];
+                $this->retry_after = $retry_after;
+                IPS_SetProperty($this->InstanceID, 'retry_after', $retry_after);
+                IPS_ApplyChanges($this->InstanceID);
+            } else if (!in_array($status_code, [409, 403])) {
                 $this->SetStatus(201);
             }
-            $this->SetStatus(102);
 
             return false;
         } else {
