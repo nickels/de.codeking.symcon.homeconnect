@@ -344,11 +344,21 @@ trait HomeConnectHelper
      */
     private function UpdateStartDevice($data)
     {
-        $options = [];
-
         // get current program settings
         if ($current_program = $this->Api('homeappliances/' . $data['haId'] . '/programs/selected')) {
             $current_program['data']['request'] = $data['value'] ? 'PUT' : 'DELETE';
+
+            // remove unused options
+            if (isset($current_program['data']['options'])) {
+                foreach ($current_program['data']['options'] AS $k => $option) {
+                    if ($option['value'] === false) {
+                        unset($current_program['data']['options'][$k]);
+                    }
+                }
+            }
+
+            // resort options
+            sort($current_program['data']['options']);
 
             // start / stop program
             return $this->Api('homeappliances/' . $data['haId'] . '/programs/active', $current_program['data']);
