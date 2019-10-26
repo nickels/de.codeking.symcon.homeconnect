@@ -747,7 +747,10 @@ class HomeConnect extends Module
         $this->ReadConfig();
 
         // show buttons, depending on current configuration
-        if ($this->access_token) {
+        if ($this->access_token && in_array($this->getStatus(), [
+                102,
+                202
+            ])) {
             return [
                 [
                     'type' => 'Button',
