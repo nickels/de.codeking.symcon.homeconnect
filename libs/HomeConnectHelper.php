@@ -5,7 +5,7 @@ trait HomeConnectHelper
     private $api = [
         'live' => [
             'endpoint' => 'https://api.home-connect.com/',
-            'client_id' => 'AC528D7EB3BB040D20D3B5A899F59A3EE03843EF8C91A53779E4EBC8F0156FCD'
+            'client_id' => '26A92AA44B05D8AFF25D42A711F2634204726F6EF022735B53F59AA0B3191088'
         ],
         'simulator' => [
             'endpoint' => 'https://simulator.home-connect.com/',
